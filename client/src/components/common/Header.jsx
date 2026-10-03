@@ -30,11 +30,11 @@ export default function Header({
           <img
             src={techboardLogo}
             alt="Technical Board IIT Guwahati"
+            className="brand-logo"
             width="34"
             height="34"
-            style={{ borderRadius: '50%', flexShrink: 0, display: 'block' }}
           />
-          <div>
+          <div className="brand-text">
             <div className="b1">Standard Progress Report</div>
             <div className="b2">Technical Board · IIT Guwahati</div>
           </div>
@@ -66,60 +66,51 @@ export default function Header({
         </nav>
 
         {/* User Account & Theme Actions */}
-        <div className="top-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="top-actions">
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div className="user-nav-group">
               <span
-                style={{
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  padding: '4px 10px',
-                  borderRadius: 'var(--r)',
-                  background: 'var(--sunk)',
-                  color: 'var(--ink)',
-                  border: '1px solid var(--line)',
-                  whiteSpace: 'nowrap'
-                }}
+                className="user-badge"
                 title={`Logged in as ${user.name} (${user.username})`}
               >
-                👤 {user.clubCode ? `${user.clubCode} · ${user.name}` : user.name}
+                <span className="user-icon">👤</span>
+                <span className="user-name-text">
+                  {user.clubCode ? `${user.clubCode} · ${user.name}` : user.name}
+                </span>
               </span>
               <button
-                className="btn ghost"
+                className="btn ghost btn-sm btn-pwd"
                 type="button"
                 onClick={onOpenChangePassword}
                 title="Change Password"
-                style={{ padding: '6px 9px', fontSize: '12px' }}
               >
-                🔑 Password
+                <span>🔑</span> <span className="btn-label-text">Password</span>
               </button>
               <button
-                className="btn ghost"
+                className="btn ghost btn-sm btn-logout"
                 type="button"
                 onClick={onLogout}
                 title="Sign Out"
-                style={{ padding: '6px 9px', fontSize: '12px', color: 'var(--bad)' }}
               >
                 Logout
               </button>
             </div>
           ) : (
             <button
-              className="btn secondary"
+              className="btn secondary btn-sm btn-signin"
               type="button"
               onClick={onOpenLogin}
-              style={{ padding: '6px 12px', fontSize: '12px', fontWeight: '600' }}
             >
               Sign In
             </button>
           )}
 
           <button
-            className="btn ghost"
+            className="btn ghost theme-toggle-btn"
             type="button"
             onClick={toggleTheme}
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
-            style={{ padding: '6px 8px', fontSize: '14px', borderRadius: 'var(--r)' }}
+            aria-label="Toggle dark/light theme"
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
@@ -128,3 +119,4 @@ export default function Header({
     </header>
   );
 }
+

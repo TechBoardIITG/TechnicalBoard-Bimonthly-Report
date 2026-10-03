@@ -129,30 +129,16 @@ export default function ReportFormPage({
           />
 
           {/* Bottom Action Submission Bar */}
-          <div
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--line)',
-              borderRadius: 'var(--r-xl)',
-              padding: '16px 20px',
-              marginTop: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: '12px',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
+          <div className="form-submit-bar">
             {saveState?.text && saveState.text !== 'Not saved' && (
               <span className="state" data-tone={saveState?.tone}>
                 {saveState?.text}
               </span>
             )}
             <button
-              className="btn submit"
+              className="btn submit btn-submit-report"
               type="button"
               onClick={onSubmit}
-              style={{ padding: '9px 24px', fontSize: '14px', fontWeight: 650 }}
             >
               Submit Report
             </button>
@@ -162,4 +148,5 @@ export default function ReportFormPage({
     </div>
   );
 }
+
 

@@ -42,26 +42,8 @@ export default function ChangePasswordModal({ isOpen, onClose, user, onPasswordC
   };
 
   return (
-    <div className="modal-backdrop" style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
-      backdropFilter: 'blur(3px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 110,
-      padding: '16px'
-    }}>
-      <div className="card" style={{
-        maxWidth: '440px',
-        width: '100%',
-        boxShadow: 'var(--shadow-lg)',
-        border: '1px solid var(--line-strong)',
-        background: 'var(--surface)',
-        borderRadius: 'var(--r-lg)',
-        padding: '24px'
-      }}>
+    <div className="modal-backdrop" onClick={(e) => !isMandatoryFirstLogin && e.target === e.currentTarget && onClose()}>
+      <div className="modal-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ink)' }}>
             {isMandatoryFirstLogin ? '🔒 First Login: Set New Password' : 'Change Password'}

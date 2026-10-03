@@ -47,43 +47,42 @@ export default function AdminDashboardPage({
   ];
 
   return (
-    <div className="subs" style={{ paddingTop: '16px' }}>
+    <div className="subs admin-page" style={{ paddingTop: '16px' }}>
       {/* Role Navigation Bar */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '10px', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-        <div>
-          <h2 style={{ fontSize: '20px', margin: 0 }}>Council Leadership Admin Panel</h2>
-          <p style={{ fontSize: '13px', color: 'var(--ink-muted)', margin: 0 }}>
+      <div className="admin-header-card">
+        <div className="admin-title-group">
+          <h2>Council Leadership Admin Panel</h2>
+          <p>
             Unified view of all details filed by the 16 Technical Board clubs.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="admin-roles-group">
           {roles.map((r) => (
             <button
               key={r.id}
-              className={`btn ${currentRole === r.id ? 'primary' : 'ghost'}`}
-              style={{ padding: '6px 12px', fontSize: '13px' }}
+              className={`btn role-btn ${currentRole === r.id ? 'primary' : 'ghost'}`}
               onClick={() => setCurrentRole(r.id)}
             >
-              <span>{r.icon}</span> {r.title}
+              <span className="role-icon">{r.icon}</span> <span className="role-name">{r.title}</span>
             </button>
           ))}
-          <button className="btn" onClick={fetchAdminStats} style={{ padding: '6px 12px' }}>
+          <button className="btn refresh-btn" onClick={fetchAdminStats}>
             🔄 Refresh Data
           </button>
         </div>
       </div>
 
       {/* Role View Banner */}
-      <div style={{ background: 'var(--brand-soft)', borderRadius: '8px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <span style={{ fontSize: '22px' }}>
+      <div className="admin-role-banner">
+        <span className="banner-icon">
           {roles.find((r) => r.id === currentRole)?.icon}
         </span>
         <div>
-          <b style={{ fontSize: '14px' }}>
+          <b>
             Active Perspective: {roles.find((r) => r.id === currentRole)?.title}
           </b>
-          <p style={{ fontSize: '12.5px', color: 'var(--ink-muted)', margin: 0 }}>
+          <p>
             {roles.find((r) => r.id === currentRole)?.desc}
           </p>
         </div>
@@ -91,7 +90,7 @@ export default function AdminDashboardPage({
 
       {/* Dynamic Role Panel */}
       {loading ? (
-        <div className="emptybox" style={{ background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--line)' }}>
+        <div className="emptybox admin-loading-box">
           Aggregating club data from MongoDB…
         </div>
       ) : (

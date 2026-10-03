@@ -66,28 +66,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
   };
 
   return (
-    <div className="modal-backdrop" style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0, 0, 0, 0.45)',
-      backdropFilter: 'blur(3px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 100,
-      padding: '16px'
-    }}>
-      <div className="card" style={{
-        maxWidth: '460px',
-        width: '100%',
-        boxShadow: 'var(--shadow-lg)',
-        border: '1px solid var(--line-strong)',
-        background: 'var(--surface)',
-        borderRadius: 'var(--r-lg)',
-        padding: '24px',
-        maxHeight: '90vh',
-        overflowY: 'auto'
-      }}>
+    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ink)' }}>Club Secretary Login</h2>
           <button
