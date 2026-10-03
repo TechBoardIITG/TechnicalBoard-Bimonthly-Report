@@ -214,58 +214,34 @@ export default function SectionCompetitions({ data = {}, formState = {}, onChang
                 </div>
                 <div className="fgrid">
                   <div className="field half">
-                    <label className="lbl">Competition</label>
-                    <select
-                      value={ach.comp || ''}
-                      onChange={(e) => onChange(`comps.achs.${idx}.comp`, e.target.value)}
-                    >
-                      <option value="">Select…</option>
-                      {(data.comps || []).map((c, cidx) => (
-                        <option key={cidx} value={idFor(formState, 'COM', c, cidx)}>
-                          {idFor(formState, 'COM', c, cidx)} · {c.name || 'Unnamed'}
+                    <label className="lbl">Competition name</label>
+                    <input
+                      type="text"
+                      list={`comp-list-${idx}`}
+                      placeholder="Enter competition name (e.g. Inter IIT Tech Meet, Robocon...)"
+                      value={ach.compName ?? ach.comp ?? ''}
+                      onChange={(e) => {
+                        onChange(`comps.achs.${idx}.compName`, e.target.value);
+                        onChange(`comps.achs.${idx}.comp`, e.target.value);
+                      }}
+                    />
+                    <datalist id={`comp-list-${idx}`}>
+                      {(data.comps || []).filter((c) => c && c.name).map((c, cidx) => (
+                        <option key={cidx} value={c.name}>
+                          {c.name} ({idFor(formState, 'COM', c, cidx)})
                         </option>
                       ))}
-                      <option value="__other">Not in the competitions list</option>
-                    </select>
+                    </datalist>
                   </div>
                   <div className="field half">
                     <label className="lbl">Position(s) achieved</label>
                     <input
                       type="text"
+                      placeholder="e.g. 1st Place, Gold Medal, Top 5..."
                       value={ach.positions || ''}
                       onChange={(e) => onChange(`comps.achs.${idx}.positions`, e.target.value)}
                     />
                   </div>
-
-                  {ach.comp === '__other' && (
-                    <>
-                      <div className="field half">
-                        <label className="lbl">Competition name</label>
-                        <input
-                          type="text"
-                          value={ach.compName || ''}
-                          onChange={(e) => onChange(`comps.achs.${idx}.compName`, e.target.value)}
-                        />
-                      </div>
-                      <div className="field half">
-                        <label className="lbl">Competition ID</label>
-                        <input
-                          type="text"
-                          value={ach.compId || ''}
-                          placeholder="TB-CODE-COM-01-26"
-                          onChange={(e) => onChange(`comps.achs.${idx}.compId`, e.target.value)}
-                        />
-                      </div>
-                      <div className="field full">
-                        <label className="lbl">Background and scale of the competition</label>
-                        <textarea
-                          rows={2}
-                          value={ach.background || ''}
-                          onChange={(e) => onChange(`comps.achs.${idx}.background`, e.target.value)}
-                        />
-                      </div>
-                    </>
-                  )}
 
                   <div className="field half">
                     <span className="lbl">Achievement shared with the Chairperson</span>
