@@ -23,6 +23,7 @@ export default function ReportFormPage({
   saveState,
   onSaveDraft,
   onSubmit,
+  user = null,
 }) {
   const sections = [
     { key: 'cover', no: '0', nav: 'Cover' },
@@ -82,6 +83,7 @@ export default function ReportFormPage({
             data={formState.cover}
             onChange={onChange}
             invalidFields={invalidFields}
+            user={user}
           />
           <SectionCTM
             data={formState.ctm}

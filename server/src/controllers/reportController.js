@@ -1,5 +1,8 @@
+import jwt from 'jsonwebtoken';
 import { Report } from '../models/Report.js';
 import { Review } from '../models/Review.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'technical_board_spr_jwt_secret_2026';
 
 // GET all reports with optional filters
 export const getReports = async (req, res) => {
@@ -97,6 +100,25 @@ export const saveReport = async (req, res) => {
       selfScores = {},
       report = {},
     } = req.body;
+
+    // Verify caller authorization if token is present
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (decoded && decoded.role === 'club_secretary' && decoded.clubCode) {
+          if (decoded.clubCode.toUpperCase() !== String(club).toUpperCase()) {
+            return res.status(403).json({
+              success: false,
+              message: `Access denied: As ${decoded.clubCode} Secretary, you are only authorized to file reports for ${decoded.clubCode}.`,
+            });
+          }
+        }
+      } catch {
+        // Token verification failed or expired
+      }
+    }
 
     if (!reportId || !club) {
       return res.status(400).json({

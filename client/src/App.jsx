@@ -3,6 +3,8 @@ import Header from './components/common/Header';
 import ReportFormPage from './pages/ReportFormPage';
 import SubmissionsPage from './pages/SubmissionsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import LoginModal from './components/auth/LoginModal';
+import ChangePasswordModal from './components/auth/ChangePasswordModal';
 import { CLUB, EXAMPLE_DATA } from './constants/referenceData';
 import { api } from './services/api';
 
@@ -19,6 +21,11 @@ const scoreTxt = (s) => (s && s.x ? `${s.x}.${s.y || '–'}` : '—');
 const RATED_KEYS = ['ctm', 'team', 'events', 'comps', 'projects', 'outreach', 'finance'];
 
 export default function App() {
+  // Authentication State
+  const [user, setUser] = useState(null);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
   // Page Tab: 'form' | 'subs' | 'admin'
   const [activeTab, setActiveTab] = useState('form');
 
@@ -128,7 +135,7 @@ export default function App() {
     });
   };
 
-  // Initial load
+  // Initial load & authentication check
   useEffect(() => {
     const init = async () => {
       try {
@@ -140,6 +147,22 @@ export default function App() {
           setSaveState({ text: 'Draft restored from browser', tone: 'warn' });
         }
       } catch (_) {}
+
+      // Check active user session
+      try {
+        const activeUser = await api.getMe();
+        if (activeUser) {
+          setUser(activeUser);
+          if (activeUser.isFirstLogin) {
+            setIsChangePasswordOpen(true);
+          }
+        } else {
+          // Open login modal if not authenticated
+          setIsLoginOpen(true);
+        }
+      } catch (_) {
+        setIsLoginOpen(true);
+      }
 
       const res = await api.checkHealth();
       if (res && res.status === 'ok') {
@@ -153,6 +176,35 @@ export default function App() {
     };
     init();
   }, []);
+
+  const handleLoginSuccess = (loggedInUser) => {
+    setUser(loggedInUser);
+    if (loggedInUser.clubCode) {
+      if (!S.cover.club) updateField('cover.club', loggedInUser.clubCode);
+      if (!S.cover.secretary) updateField('cover.secretary', loggedInUser.name);
+    }
+    if (loggedInUser.isFirstLogin) {
+      setIsChangePasswordOpen(true);
+      showToast(`👋 Welcome ${loggedInUser.name}! Please set your new password.`);
+    } else {
+      showToast(`Welcome back, ${loggedInUser.name}!`);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('tbspr-token');
+    setUser(null);
+    showToast('Signed out successfully.');
+  };
+
+  const handlePasswordChanged = (updatedUser) => {
+    if (updatedUser) {
+      setUser(updatedUser);
+    } else {
+      setUser((prev) => (prev ? { ...prev, isFirstLogin: false } : null));
+    }
+    showToast('🔒 Password updated successfully!');
+  };
 
   // Save to localStorage debounce
   useEffect(() => {
@@ -214,6 +266,12 @@ export default function App() {
 
   // Save / Submit to MongoDB
   const handleSave = async (status = 'draft') => {
+    if (!user) {
+      setIsLoginOpen(true);
+      showToast('🔒 Please sign in with your Club Secretary account to submit this report.');
+      return false;
+    }
+
     const rId = reportId(S);
     if (!rId) {
       validateForm();
@@ -418,23 +476,48 @@ export default function App() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        user={user}
+        onOpenLogin={() => setIsLoginOpen(true)}
+        onOpenChangePassword={() => setIsChangePasswordOpen(true)}
+        onLogout={handleLogout}
       />
 
       {activeTab === 'form' && (
-        <ReportFormPage
-          formState={S}
-          onChange={updateField}
-          invalidFields={invalidFields}
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-          sectionCounts={sectionCounts}
-          exampleOn={exampleOn}
-          onClearExample={() => handleNewReport(true)}
-          currentReportId={reportId(S)}
-          saveState={saveState}
-          onSaveDraft={() => handleSave('draft')}
-          onSubmit={() => handleSave('submitted')}
-        />
+        !user ? (
+          <div style={{ maxWidth: '580px', margin: '60px auto', padding: '36px 28px', textAlign: 'center' }} className="card">
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔒</div>
+            <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px', color: 'var(--ink)' }}>
+              Authentication Required
+            </h2>
+            <p style={{ color: 'var(--ink-secondary)', marginBottom: '22px', fontSize: '13.5px', lineHeight: '1.6' }}>
+              Please sign in with your <b>Club Secretary</b> or <b>Council</b> credentials to fill, review, and submit bimonthly progress reports.
+            </p>
+            <button
+              type="button"
+              className="btn primary"
+              style={{ padding: '10px 24px', fontSize: '14px', fontWeight: '600' }}
+              onClick={() => setIsLoginOpen(true)}
+            >
+              Sign In with Club Credentials
+            </button>
+          </div>
+        ) : (
+          <ReportFormPage
+            formState={S}
+            onChange={updateField}
+            invalidFields={invalidFields}
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
+            sectionCounts={sectionCounts}
+            exampleOn={exampleOn}
+            onClearExample={() => handleNewReport(true)}
+            currentReportId={reportId(S)}
+            saveState={saveState}
+            onSaveDraft={() => handleSave('draft')}
+            onSubmit={() => handleSave('submitted')}
+            user={user}
+          />
+        )
       )}
 
       {activeTab === 'subs' && (
@@ -473,6 +556,21 @@ export default function App() {
           onOpenReport={handleOpenReport}
         />
       )}
+
+      {/* Authentication Modals */}
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        user={user}
+        onPasswordChanged={handlePasswordChanged}
+        isMandatoryFirstLogin={Boolean(user?.isFirstLogin)}
+      />
 
       {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
     </div>

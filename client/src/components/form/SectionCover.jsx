@@ -8,14 +8,23 @@ const reportId = (r) => {
   return r?.cover?.club && n ? `TB-${r.cover.club}-${n}` : null;
 };
 
-export default function SectionCover({ data = {}, onChange, invalidFields = new Set() }) {
-  const currentClub = CLUB[data.club];
-  const rId = reportId({ cover: data });
+export default function SectionCover({ data = {}, onChange, invalidFields = new Set(), user = null }) {
+  const isSecretary = user?.role === 'club_secretary' && Boolean(user?.clubCode);
+  const activeClubCode = isSecretary ? user.clubCode : (data.club || '');
+  const currentClub = CLUB[activeClubCode];
+  const rId = reportId({ cover: { ...data, club: activeClubCode } });
+
+  React.useEffect(() => {
+    if (isSecretary && data.club !== user.clubCode) {
+      onChange('cover.club', user.clubCode);
+    }
+  }, [isSecretary, user?.clubCode, data.club]);
+
   const prevReportId = useMemo(() => {
     const n = N(data.reportNo);
     if (!n) return '—';
-    return n > 1 ? `TB-${code({ cover: data })}-${n - 1}` : 'None (first report)';
-  }, [data]);
+    return n > 1 ? `TB-${activeClubCode || code({ cover: data })}-${n - 1}` : 'None (first report)';
+  }, [data.reportNo, activeClubCode]);
 
   return (
     <section className="sec" id="sec-cover">
@@ -26,20 +35,30 @@ export default function SectionCover({ data = {}, onChange, invalidFields = new 
       <div className="fgrid">
         <div className={`field half ${invalidFields.has('cover.club') ? 'invalid' : ''}`}>
           <label className="lbl" htmlFor="cover_club">
-            Club <span className="req">Required</span>
+            Club {isSecretary ? <span style={{ color: 'var(--brand)', fontWeight: '600' }}>(Locked to your club)</span> : <span className="req">Required</span>}
           </label>
-          <select
-            id="cover_club"
-            value={data.club || ''}
-            onChange={(e) => onChange('cover.club', e.target.value)}
-          >
-            <option value="">Select club…</option>
-            {CLUBS.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name} ({c.code})
-              </option>
-            ))}
-          </select>
+          {isSecretary ? (
+            <input
+              id="cover_club"
+              type="text"
+              readOnly
+              value={`${currentClub?.name || user.clubName || user.clubCode} (${user.clubCode})`}
+              style={{ background: 'var(--sunk)', cursor: 'not-allowed', fontWeight: '600' }}
+            />
+          ) : (
+            <select
+              id="cover_club"
+              value={data.club || ''}
+              onChange={(e) => onChange('cover.club', e.target.value)}
+            >
+              <option value="">Select club…</option>
+              {CLUBS.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name} ({c.code})
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className="field half">

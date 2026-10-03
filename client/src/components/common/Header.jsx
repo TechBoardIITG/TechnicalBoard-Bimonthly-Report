@@ -4,6 +4,10 @@ import techboardLogo from '../../assets/techboard-logo.jpg';
 export default function Header({
   activeTab,
   setActiveTab,
+  user,
+  onOpenLogin,
+  onOpenChangePassword,
+  onLogout,
 }) {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('tbspr-theme') || 'light';
@@ -61,8 +65,55 @@ export default function Header({
           </button>
         </nav>
 
-        {/* Theme Toggle */}
-        <div className="top-actions">
+        {/* User Account & Theme Actions */}
+        <div className="top-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--r)',
+                  background: 'var(--sunk)',
+                  color: 'var(--ink)',
+                  border: '1px solid var(--line)',
+                  whiteSpace: 'nowrap'
+                }}
+                title={`Logged in as ${user.name} (${user.username})`}
+              >
+                👤 {user.clubCode ? `${user.clubCode} · ${user.name}` : user.name}
+              </span>
+              <button
+                className="btn ghost"
+                type="button"
+                onClick={onOpenChangePassword}
+                title="Change Password"
+                style={{ padding: '6px 9px', fontSize: '12px' }}
+              >
+                🔑 Password
+              </button>
+              <button
+                className="btn ghost"
+                type="button"
+                onClick={onLogout}
+                title="Sign Out"
+                style={{ padding: '6px 9px', fontSize: '12px', color: 'var(--bad)' }}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              className="btn secondary"
+              type="button"
+              onClick={onOpenLogin}
+              style={{ padding: '6px 12px', fontSize: '12px', fontWeight: '600' }}
+            >
+              Sign In
+            </button>
+          )}
+
           <button
             className="btn ghost"
             type="button"

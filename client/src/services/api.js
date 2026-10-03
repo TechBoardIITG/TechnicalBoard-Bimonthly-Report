@@ -1,6 +1,73 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('tbspr-token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
 
 export const api = {
+  // Authentication
+  async login(username, password) {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Login failed');
+    }
+    if (data.token) {
+      localStorage.setItem('tbspr-token', data.token);
+    }
+    return data;
+  },
+
+  async changePassword(currentPassword, newPassword) {
+    const res = await fetch(`${API_BASE}/auth/change-password`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to change password');
+    }
+    if (data.token) {
+      localStorage.setItem('tbspr-token', data.token);
+    }
+    return data;
+  },
+
+  async getMe() {
+    const token = localStorage.getItem('tbspr-token');
+    if (!token) return null;
+    try {
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        localStorage.removeItem('tbspr-token');
+        return null;
+      }
+      const data = await res.json();
+      return data.user || null;
+    } catch {
+      return null;
+    }
+  },
+
+  async getUsers() {
+    const res = await fetch(`${API_BASE}/auth/users`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch users');
+    return await res.json();
+  },
+
   // Check health and DB status
   async checkHealth() {
     try {
@@ -53,9 +120,7 @@ export const api = {
   async saveReport(reportData) {
     const res = await fetch(`${API_BASE}/reports`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(reportData),
     });
     if (!res.ok) {
@@ -69,6 +134,7 @@ export const api = {
   async deleteReport(id) {
     const res = await fetch(`${API_BASE}/reports/${encodeURIComponent(id)}`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
