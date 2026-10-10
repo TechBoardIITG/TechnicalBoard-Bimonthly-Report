@@ -1,13 +1,22 @@
-version: '3.8'
+version: "3.3"
 
 services:
-  client:
+  tb_bimonthly_frontend_prod:
+    image: tb_bimonthly_frontend_prod
+    container_name: tb_bimonthly_frontend_prod
+    restart: always
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: tbspr-client
+      args:
+        - VITE_BASE=/tb-bimonthly/
+        - VITE_BACKEND_URL=https://swc.iitg.ac.in/tb-bimonthly/api
     ports:
-      - "5173:80"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: unless-stopped
+      - "5672:3000"
+    env_file:
+      - .env
+    networks:
+      - tb_bimonthly_network
+
+networks:
+  tb_bimonthly_network:
+    external: true

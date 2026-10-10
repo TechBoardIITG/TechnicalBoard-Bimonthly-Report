@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'technical_board_spr_secret_key_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'technical_board_spr_jwt_secret_2026';
 
 const generateToken = (user) => {
   return jwt.sign(

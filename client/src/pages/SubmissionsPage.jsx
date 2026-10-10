@@ -19,6 +19,7 @@ export default function SubmissionsPage({
   reviewState,
   onSaveReview,
   onEditInForm,
+  user = null,
 }) {
   return (
     <div id="view-subs">
@@ -118,15 +119,18 @@ export default function SubmissionsPage({
                               style={{ padding: '3px 8px', fontSize: '12px' }}
                               onClick={() => setDetailReport(r)}
                             >
-                              Review
+                              View
                             </button>
-                            <button
-                              className="btn"
-                              style={{ padding: '3px 8px', fontSize: '12px' }}
-                              onClick={() => onEditInForm(r)}
-                            >
-                              Edit
-                            </button>
+                            {user?.role === 'club_secretary' &&
+                              (!user.clubCode || user.clubCode.toUpperCase() === (r.club || '').toUpperCase()) && (
+                                <button
+                                  className="btn"
+                                  style={{ padding: '3px 8px', fontSize: '12px' }}
+                                  onClick={() => onEditInForm(r)}
+                                >
+                                  Edit
+                                </button>
+                              )}
                           </div>
                         </td>
                       </tr>
@@ -152,6 +156,7 @@ export default function SubmissionsPage({
             onSaveReview={onSaveReview}
             onBack={() => setDetailReport(null)}
             onEditInForm={onEditInForm}
+            user={user}
           />
         )}
       </div>

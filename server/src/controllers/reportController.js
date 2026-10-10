@@ -101,23 +101,38 @@ export const saveReport = async (req, res) => {
       report = {},
     } = req.body;
 
-    // Verify caller authorization if token is present
+    // Strictly enforce: ONLY Club Secretaries can upload or submit progress reports
     const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, JWT_SECRET);
-        if (decoded && decoded.role === 'club_secretary' && decoded.clubCode) {
-          if (decoded.clubCode.toUpperCase() !== String(club).toUpperCase()) {
-            return res.status(403).json({
-              success: false,
-              message: `Access denied: As ${decoded.clubCode} Secretary, you are only authorized to file reports for ${decoded.clubCode}.`,
-            });
-          }
-        }
-      } catch {
-        // Token verification failed or expired
-      }
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required: Please sign in with your Club Secretary account to upload progress reports.',
+      });
+    }
+
+    let decoded;
+    try {
+      const token = authHeader.split(' ')[1];
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired session. Please sign in again.',
+      });
+    }
+
+    if (!decoded || decoded.role !== 'club_secretary') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: Only Club Secretaries are authorized to upload and submit progress reports. Council members have view-only access via the Admin Panel.',
+      });
+    }
+
+    if (!decoded.clubCode || decoded.clubCode.toUpperCase() !== String(club).toUpperCase()) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied: As ${decoded.clubCode || 'Secretary'}, you are only authorized to file reports for ${decoded.clubCode}.`,
+      });
     }
 
     if (!reportId || !club) {
@@ -210,6 +225,20 @@ export const saveReview = async (req, res) => {
   try {
     const { reportId } = req.params;
     const { review, club } = req.body;
+
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (decoded.role === 'club_secretary') {
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied: Club Secretaries are not authorized to submit Council Reviews.',
+          });
+        }
+      } catch {}
+    }
 
     if (!reportId || !review) {
       return res.status(400).json({ success: false, message: 'Report ID and Review data are required' });

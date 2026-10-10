@@ -40,29 +40,36 @@ export default function Header({
           </div>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation - Role-based visibility */}
         <nav className="tabs" role="tablist" aria-label="Main Navigation">
-          <button
-            role="tab"
-            aria-selected={activeTab === 'form'}
-            onClick={() => setActiveTab('form')}
-          >
-            Report form
-          </button>
-          <button
-            role="tab"
-            aria-selected={activeTab === 'subs'}
-            onClick={() => setActiveTab('subs')}
-          >
-            Submissions
-          </button>
-          <button
-            role="tab"
-            aria-selected={activeTab === 'admin'}
-            onClick={() => setActiveTab('admin')}
-          >
-            Admin Panel
-          </button>
+          {user && user.role !== 'club_secretary' ? (
+            /* Council Member: sees ONLY Admin Panel */
+            <button
+              role="tab"
+              aria-selected={activeTab === 'admin'}
+              onClick={() => setActiveTab('admin')}
+            >
+              Council Admin Panel
+            </button>
+          ) : (
+            /* Club Secretary & Guests: sees Report Form & Submissions */
+            <>
+              <button
+                role="tab"
+                aria-selected={activeTab === 'form'}
+                onClick={() => setActiveTab('form')}
+              >
+                Report form
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeTab === 'subs'}
+                onClick={() => setActiveTab('subs')}
+              >
+                Submissions
+              </button>
+            </>
+          )}
         </nav>
 
         {/* User Account & Theme Actions */}

@@ -22,18 +22,24 @@ export default function ReportDetail({
   onSaveReview,
   onBack,
   onEditInForm,
+  user = null,
 }) {
   const status = report.reviewed ? 'reviewed' : report.status || 'draft';
+  const isClubSecy = user?.role === 'club_secretary';
+  const isCouncil = user && user.role !== 'club_secretary';
+  const canEditReport = isClubSecy && Boolean(onEditInForm) && (!user?.clubCode || user.clubCode.toUpperCase() === (report.club || '').toUpperCase());
 
   return (
     <div className="detail" id="detail">
       <div className="detail-head">
         <button className="btn" id="btnBack" type="button" onClick={onBack}>
-          ← All submissions
+          ← {isCouncil ? 'Back to Admin Panel' : 'All submissions'}
         </button>
-        <button className="btn primary" type="button" onClick={() => onEditInForm(report)}>
-          ✎ Edit this report in Form
-        </button>
+        {canEditReport && (
+          <button className="btn primary" type="button" onClick={() => onEditInForm(report)}>
+            ✎ Edit this report in Form
+          </button>
+        )}
         <h2 id="dTitle">
           {report.reportId} · {report.clubName || report.club}
         </h2>
@@ -60,9 +66,14 @@ export default function ReportDetail({
         <header className="sec-head">
           <span className="sec-no">TB</span>
           <h2>Council review & audit</h2>
-          <p>For use by the Technical Board Council only. Compare with self-assessment scores and provide strategic observations.</p>
+          <p>
+            {isCouncil
+              ? 'For use by the Technical Board Council only. Compare with self-assessment scores and provide strategic observations.'
+              : 'Official audit ratings provided by the Technical Board Council leadership.'}
+          </p>
         </header>
 
+        <fieldset disabled={isClubSecy} style={{ border: 'none', padding: 0, margin: 0 }}>
         <div className="fgrid">
           <div className="group full">
             <h3><span className="gno">A</span>Section ratings</h3>
@@ -193,14 +204,23 @@ export default function ReportDetail({
             </div>
           </div>
         </div>
+        </fieldset>
       </section>
 
-      <div className="toolbar" style={{ marginBlock: '12px' }}>
-        <button className="btn primary" id="btnSaveReview" type="button" onClick={onSaveReview}>
-          Save council review to MongoDB
-        </button>
-        <span className="state">{reviewState}</span>
-      </div>
+      {isCouncil ? (
+        <div className="toolbar" style={{ marginBlock: '12px' }}>
+          <button className="btn primary" id="btnSaveReview" type="button" onClick={onSaveReview}>
+            Save council review to MongoDB
+          </button>
+          <span className="state">{reviewState}</span>
+        </div>
+      ) : (
+        <div className="toolbar" style={{ marginBlock: '12px' }}>
+          <span className="state">
+            Council Appraisal Status: <b>{report.reviewed ? 'Audited by Technical Board Council' : 'Pending Council Audit'}</b>
+          </span>
+        </div>
+      )}
 
       {/* Read-Only Club Report View */}
       <details className="box" open>

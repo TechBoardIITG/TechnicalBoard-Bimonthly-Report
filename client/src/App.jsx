@@ -153,6 +153,13 @@ export default function App() {
         const activeUser = await api.getMe();
         if (activeUser) {
           setUser(activeUser);
+          if (activeUser.role !== 'club_secretary') {
+            setActiveTab('admin');
+            if (activeUser.role === 'tech_secy') setCurrentRole('techsecy');
+            else if (activeUser.role === 'oc') setCurrentRole('oc');
+            else if (activeUser.role === 'events_head') setCurrentRole('events');
+            else if (activeUser.role === 'webmaster') setCurrentRole('webmaster');
+          }
           if (activeUser.isFirstLogin) {
             setIsChangePasswordOpen(true);
           }
@@ -179,21 +186,31 @@ export default function App() {
 
   const handleLoginSuccess = (loggedInUser) => {
     setUser(loggedInUser);
-    if (loggedInUser.clubCode) {
-      if (!S.cover.club) updateField('cover.club', loggedInUser.clubCode);
-      if (!S.cover.secretary) updateField('cover.secretary', loggedInUser.name);
+    if (loggedInUser.role !== 'club_secretary') {
+      setActiveTab('admin');
+      if (loggedInUser.role === 'tech_secy') setCurrentRole('techsecy');
+      else if (loggedInUser.role === 'oc') setCurrentRole('oc');
+      else if (loggedInUser.role === 'events_head') setCurrentRole('events');
+      else if (loggedInUser.role === 'webmaster') setCurrentRole('webmaster');
+      showToast(`🏛️ Welcome ${loggedInUser.name}! Opening Council Admin Panel.`);
+    } else {
+      setActiveTab('form');
+      if (loggedInUser.clubCode) {
+        if (!S.cover.club) updateField('cover.club', loggedInUser.clubCode);
+        if (!S.cover.secretary) updateField('cover.secretary', loggedInUser.name);
+      }
+      showToast(`👋 Welcome ${loggedInUser.name}!`);
     }
     if (loggedInUser.isFirstLogin) {
       setIsChangePasswordOpen(true);
-      showToast(`👋 Welcome ${loggedInUser.name}! Please set your new password.`);
-    } else {
-      showToast(`Welcome back, ${loggedInUser.name}!`);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('tbspr-token');
     setUser(null);
+    setActiveTab('form');
+    setDetailReport(null);
     showToast('Signed out successfully.');
   };
 
@@ -268,7 +285,17 @@ export default function App() {
   const handleSave = async (status = 'draft') => {
     if (!user) {
       setIsLoginOpen(true);
-      showToast('🔒 Please sign in with your Club Secretary account to submit this report.');
+      showToast('🔒 Please sign in with your Club Secretary account to upload progress reports.');
+      return false;
+    }
+
+    if (user.role !== 'club_secretary') {
+      showToast('⛔ Access Denied: Only Club Secretaries can upload or submit progress reports.');
+      return false;
+    }
+
+    if (user.clubCode && S.cover?.club && user.clubCode.toUpperCase() !== S.cover.club.toUpperCase()) {
+      showToast(`⛔ Access Denied: As ${user.clubCode} Secretary, you can only file reports for ${user.clubCode}.`);
       return false;
     }
 
@@ -412,15 +439,27 @@ export default function App() {
       setDetailReport(res.report);
       setCouncilReview(res.review || {});
       setReviewState(res.review ? 'Last updated review' : 'Not reviewed yet');
-      setActiveTab('subs');
+      if (user && user.role !== 'club_secretary') {
+        setActiveTab('admin');
+      } else {
+        setActiveTab('subs');
+      }
     } catch (err) {
       console.error(err);
       showToast('Failed to open report details.');
     }
   };
 
-  // Edit in Form
+  // Edit in Form (Strictly Club Secretary only)
   const handleEditInForm = (rep) => {
+    if (!user || user.role !== 'club_secretary') {
+      showToast('⛔ Access Denied: Only Club Secretaries can edit reports in the form editor.');
+      return;
+    }
+    if (user.clubCode && rep.club && user.clubCode.toUpperCase() !== rep.club.toUpperCase()) {
+      showToast(`⛔ Access Denied: As ${user.clubCode} Secretary, you can only edit reports for ${user.clubCode}.`);
+      return;
+    }
     if (rep.report) {
       setS(clone(rep.report));
       setExampleOn(false);
@@ -482,79 +521,90 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {activeTab === 'form' && (
-        !user ? (
-          <div style={{ maxWidth: '580px', margin: '60px auto', padding: '36px 28px', textAlign: 'center' }} className="card">
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔒</div>
-            <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px', color: 'var(--ink)' }}>
-              Authentication Required
-            </h2>
-            <p style={{ color: 'var(--ink-secondary)', marginBottom: '22px', fontSize: '13.5px', lineHeight: '1.6' }}>
-              Please sign in with your <b>Club Secretary</b> or <b>Council</b> credentials to fill, review, and submit bimonthly progress reports.
-            </p>
-            <button
-              type="button"
-              className="btn primary"
-              style={{ padding: '10px 24px', fontSize: '14px', fontWeight: '600' }}
-              onClick={() => setIsLoginOpen(true)}
-            >
-              Sign In with Club Credentials
-            </button>
-          </div>
-        ) : (
-          <ReportFormPage
-            formState={S}
-            onChange={updateField}
-            invalidFields={invalidFields}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-            sectionCounts={sectionCounts}
-            exampleOn={exampleOn}
-            onClearExample={() => handleNewReport(true)}
-            currentReportId={reportId(S)}
-            saveState={saveState}
-            onSaveDraft={() => handleSave('draft')}
-            onSubmit={() => handleSave('submitted')}
-            user={user}
-          />
-        )
-      )}
-
-      {activeTab === 'subs' && (
-        <SubmissionsPage
-          submissions={submissions}
-          loading={loadingSubs}
-          fDomain={fDomain}
-          setFDomain={setFDomain}
-          fStatus={fStatus}
-          setFStatus={setFStatus}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          onRefresh={fetchSubmissions}
-          onExportAll={() => {
-            const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(submissions, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute('href', dataStr);
-            dlAnchor.setAttribute('download', `TB-Submissions-${new Date().toISOString().slice(0, 10)}.json`);
-            dlAnchor.click();
-          }}
+      {/* Role Guard: Council Members see ONLY Admin Panel */}
+      {user && user.role !== 'club_secretary' ? (
+        <AdminDashboardPage
+          currentRole={currentRole}
+          setCurrentRole={setCurrentRole}
+          reports={submissions}
+          onOpenReport={handleOpenReport}
           detailReport={detailReport}
           setDetailReport={setDetailReport}
           councilReview={councilReview}
           setCouncilReview={setCouncilReview}
           reviewState={reviewState}
           onSaveReview={handleSaveReview}
-          onEditInForm={handleEditInForm}
+          user={user}
         />
-      )}
+      ) : (
+        <>
+          {activeTab === 'form' && (
+            !user ? (
+              <div style={{ maxWidth: '580px', margin: '60px auto', padding: '36px 28px', textAlign: 'center' }} className="card">
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔒</div>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px', color: 'var(--ink)' }}>
+                  Club Secretary Login Required
+                </h2>
+                <p style={{ color: 'var(--ink-secondary)', marginBottom: '22px', fontSize: '13.5px', lineHeight: '1.6' }}>
+                  Only <b>Club Secretaries</b> are authorized to upload and submit bimonthly progress reports. Please sign in with your club credentials to access the report form.
+                </p>
+                <button
+                  type="button"
+                  className="btn primary"
+                  style={{ padding: '10px 24px', fontSize: '14px', fontWeight: '600' }}
+                  onClick={() => setIsLoginOpen(true)}
+                >
+                  Sign In with Club Secretary Credentials
+                </button>
+              </div>
+            ) : (
+              <ReportFormPage
+                formState={S}
+                onChange={updateField}
+                invalidFields={invalidFields}
+                activeSection={activeSection}
+                setActiveSection={setActiveSection}
+                sectionCounts={sectionCounts}
+                exampleOn={exampleOn}
+                onClearExample={() => handleNewReport(true)}
+                currentReportId={reportId(S)}
+                saveState={saveState}
+                onSaveDraft={() => handleSave('draft')}
+                onSubmit={() => handleSave('submitted')}
+                user={user}
+              />
+            )
+          )}
 
-      {activeTab === 'admin' && (
-        <AdminDashboardPage
-          currentRole={currentRole}
-          setCurrentRole={setCurrentRole}
-          reports={submissions}
-          onOpenReport={handleOpenReport}
-        />
+          {activeTab === 'subs' && (
+            <SubmissionsPage
+              submissions={submissions}
+              loading={loadingSubs}
+              fDomain={fDomain}
+              setFDomain={setFDomain}
+              fStatus={fStatus}
+              setFStatus={setFStatus}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              onRefresh={fetchSubmissions}
+              onExportAll={() => {
+                const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(submissions, null, 2));
+                const dlAnchor = document.createElement('a');
+                dlAnchor.setAttribute('href', dataStr);
+                dlAnchor.setAttribute('download', `TB-Submissions-${new Date().toISOString().slice(0, 10)}.json`);
+                dlAnchor.click();
+              }}
+              detailReport={detailReport}
+              setDetailReport={setDetailReport}
+              councilReview={councilReview}
+              setCouncilReview={setCouncilReview}
+              reviewState={reviewState}
+              onSaveReview={handleSaveReview}
+              onEditInForm={handleEditInForm}
+              user={user}
+            />
+          )}
+        </>
       )}
 
       {/* Authentication Modals */}

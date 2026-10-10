@@ -1,29 +1,28 @@
-version: '3.8'
+version: "3.3"
 
 services:
-  api:
+  tb_bimonthly_backend_prod:
+    image: tb_bimonthly_backend_prod
+    container_name: tb_bimonthly_backend_prod
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tbspr-server
-    ports:
-      - "5000:5000"
-    environment:
-      - PORT=5000
-      - MONGODB_URI=mongodb://mongo:27017/tb_progress_reports
-    depends_on:
-      - mongo
-    restart: unless-stopped
-
-  mongo:
-    image: mongo:7.0
-    container_name: tbspr-mongodb
-    ports:
-      - "27017:27017"
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
-      - mongo-data:/data/db
-    restart: unless-stopped
+      - tb_bimonthly_uploads_prod:/app/uploads
+
+    ports:
+      - "5673:5000"
+    env_file:
+      - .env
+    networks:
+      - tb_bimonthly_network
 
 volumes:
-  mongo-data:
-    driver: local
+  tb_bimonthly_uploads_prod:
+
+networks:
+  tb_bimonthly_network:
+    external: true

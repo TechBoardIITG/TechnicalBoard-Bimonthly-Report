@@ -3,6 +3,7 @@ import TechSecyPanel from '../components/admin/TechSecyPanel';
 import OCPanel from '../components/admin/OCPanel';
 import EventsHeadPanel from '../components/admin/EventsHeadPanel';
 import WebmasterPanel from '../components/admin/WebmasterPanel';
+import ReportDetail from '../components/submissions/ReportDetail';
 import { api } from '../services/api';
 
 export default function AdminDashboardPage({
@@ -10,6 +11,13 @@ export default function AdminDashboardPage({
   setCurrentRole,
   reports = [],
   onOpenReport,
+  detailReport = null,
+  setDetailReport,
+  councilReview = {},
+  setCouncilReview,
+  reviewState = '',
+  onSaveReview,
+  user = null,
 }) {
   const [adminData, setAdminData] = useState({
     stats: {},
@@ -45,6 +53,23 @@ export default function AdminDashboardPage({
     { id: 'events', title: 'Events Head', icon: '🎪', desc: 'Events turnout, reach analytics & media checks' },
     { id: 'webmaster', title: 'Webmaster', icon: '⚙️', desc: 'Assets repository, DB statistics & JSON backups' },
   ];
+
+  if (detailReport) {
+    return (
+      <div className="subs admin-page" style={{ paddingTop: '16px' }}>
+        <ReportDetail
+          report={detailReport}
+          councilReview={councilReview}
+          setCouncilReview={setCouncilReview}
+          reviewState={reviewState}
+          onSaveReview={onSaveReview}
+          onBack={() => setDetailReport && setDetailReport(null)}
+          onEditInForm={null}
+          user={user}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="subs admin-page" style={{ paddingTop: '16px' }}>

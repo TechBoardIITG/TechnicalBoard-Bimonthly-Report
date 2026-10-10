@@ -1,20 +1,21 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import { seedDefaultUsers } from './utils/seedUsers.js';
 import reportRoutes from './routes/reportRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB & Seed Default Accounts
-connectDB().then(() => {
-  seedDefaultUsers();
-});
+connectDB()
+  .then(() => seedDefaultUsers())
+  .catch((err) => {
+    console.error(`❌ MongoDB Connection Error: ${err.message}`);
+    process.exit(1);
+  });
 
 // Middleware
 app.use(cors({
